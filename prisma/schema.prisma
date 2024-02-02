@@ -41,6 +41,7 @@ model Category {
   billboardId String      // Foreign Key to Billboard
   billboard   Billboard   @relation(fields: [billboardId], references: [id])
   name        String
+  scategories Scategory [] @relation("CategoryToScategory")
   products    Product[]   @relation("CategoryToProduct")
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -103,11 +104,15 @@ model Scategory {
   storeId     String    // Foreign Key to Store
   store       Store     @relation("StoreToSize", fields: [storeId], references: [id])
   name        String
+  simages     SImage[]
+  categoryId  String    // Foreign Key to Category
+  category    Category  @relation("CategoryToScategory", fields: [categoryId], references: [id])
   products    Product[] // Relation to Product model
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([storeId])
+  @@index([categoryId])
 }
 
 
@@ -133,4 +138,16 @@ model BImage {
 
   
   @@index([billboardId])
+}
+
+model SImage {
+  id          String   @id @default(uuid())
+  scategoryId String  // Foreign Key to BillBoard
+  scategory   Scategory  @relation(fields: [scategoryId], references: [id], onDelete: Cascade)
+  url         String   // URL of the image
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  
+  @@index([scategoryId])
 }

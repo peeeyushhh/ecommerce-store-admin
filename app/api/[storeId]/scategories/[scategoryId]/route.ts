@@ -15,6 +15,10 @@ export async function GET(
     const scategory = await prismadb.scategory.findUnique({
       where: {
         id: params.scategoryId
+      },
+      include: {
+        category: true,
+        simages: true,
       }
     });
   
@@ -74,7 +78,7 @@ export async function PATCH(
 
     const body = await req.json();
 
-    const { name } = body;
+    const { name, categoryId, simages } = body;
 
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 403 });
@@ -82,6 +86,14 @@ export async function PATCH(
 
     if (!name) {
       return new NextResponse("Name is required", { status: 400 });
+    }
+
+    if (!simages) {
+      return new NextResponse("Image URL is required", { status: 400 });
+    }
+
+    if (!categoryId) {
+      return new NextResponse("Category id is required", { status: 400 });
     }
 
     if (!params.scategoryId) {
@@ -99,12 +111,33 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 405 });
     }
 
+     await prismadb.scategory.update({
+      where: {
+        id: params.scategoryId
+      },
+      data: {
+        name,
+        categoryId,
+        simages: {
+          deleteMany:{}
+        }
+      }
+    });
+
     const scategory = await prismadb.scategory.update({
       where: {
         id: params.scategoryId
       },
       data: {
         name,
+        categoryId,
+        simages: {
+          createMany: {
+            data: [
+              ...simages.map((image: { url: string }) => image),
+            ]
+          }
+        }
       }
     });
   

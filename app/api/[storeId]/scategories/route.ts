@@ -12,7 +12,7 @@ export async function POST(
 
     const body = await req.json();
 
-    const { name } = body;
+    const { name, categoryId, simages } = body;
 
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 403 });
@@ -20,6 +20,14 @@ export async function POST(
 
     if (!name) {
       return new NextResponse("Name is required", { status: 400 });
+    }
+
+    if (!simages || !simages.length) {
+      return new NextResponse("bimages are required", { status: 400 });
+    }
+
+    if (!categoryId) {
+      return new NextResponse("Category id is required", { status: 400 });
     }
 
     if (!params.storeId) {
@@ -40,7 +48,15 @@ export async function POST(
     const scategory = await prismadb.scategory.create({
       data: {
         name,
-        storeId: params.storeId
+        categoryId,
+        storeId: params.storeId,
+        simages: {
+          createMany: {
+            data: [
+              ...simages.map((image: {url:string}) => image)
+            ]
+          }
+        }
       }
     });
   

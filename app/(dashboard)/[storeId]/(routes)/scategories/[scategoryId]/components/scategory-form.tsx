@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { toast } from "react-hot-toast"
 import { Trash } from "lucide-react"
-import { Scategory } from "@prisma/client"
+import { Category, SImage, Scategory } from "@prisma/client"
 import { useParams, useRouter } from "next/navigation"
 
 import { Input } from "@/components/ui/input"
@@ -21,21 +21,29 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Heading } from "@/components/ui/heading"
 import { AlertModal } from "@/components/modals/alert-modal"
+import ImageUpload from "@/components/ui/image-upload"
 
 const formSchema = z.object({
   name: z.string().min(1),
+  categoryId: z.string().min(1),
+  simages: z.object({ url: z.string() }).array(),
 });
 
 type ScategoryFormValues = z.infer<typeof formSchema>
 
 interface ScategoryFormProps {
-  initialData: Scategory | null;
+  initialData: Scategory & {
+    simages: SImage[]
+  }| null;
+  categories: Category[];
 };
 
 export const ScategoryForm: React.FC<ScategoryFormProps> = ({
-  initialData
+  initialData,
+  categories
 }) => {
   const params = useParams();
   const router = useRouter();
@@ -48,11 +56,17 @@ export const ScategoryForm: React.FC<ScategoryFormProps> = ({
   const toastMessage = initialData ? 'Sub category updated.' : 'Sub category created.';
   const action = initialData ? 'Save changes' : 'Create';
 
+  const defaultValues = initialData ? {
+    ...initialData } : {
+      name: '',
+      categoryId: '',
+      simages: [],
+    }
+
+
   const form = useForm<ScategoryFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
-      name: ''
-    }
+    defaultValues
   });
 
   const onSubmit = async (data: ScategoryFormValues) => {
@@ -112,7 +126,26 @@ export const ScategoryForm: React.FC<ScategoryFormProps> = ({
       <Separator />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full">
-          <div className="md:grid md:grid-cols-3 gap-8">
+          
+          <FormField
+              control={form.control}
+              name="simages"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Background image</FormLabel>
+                  <FormControl>
+                  <ImageUpload 
+                    value={field.value.map((image) => image.url)} 
+                    disabled={loading} 
+                    onChange={(url) => field.onChange([...field.value, { url }])}
+                    onRemove={(url) => field.onChange([...field.value.filter((current) => current.url !== url)])}
+                  />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="md:grid md:grid-cols-3 gap-8">
             <FormField
               control={form.control}
               name="name"
@@ -126,7 +159,29 @@ export const ScategoryForm: React.FC<ScategoryFormProps> = ({
                 </FormItem>
               )}
             />
-          </div>
+             <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select disabled={loading} onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue defaultValue={field.value} placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories?.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            </div>
           <Button disabled={loading} className="ml-auto" type="submit">
             {action}
           </Button>

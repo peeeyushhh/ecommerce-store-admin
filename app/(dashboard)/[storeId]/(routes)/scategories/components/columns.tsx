@@ -16,6 +16,10 @@ export const columns: ColumnDef<ScategoryColumn>[] = [
     header: "Name",
   },
   {
+    accessorKey: "category",
+    header: "Category",
+  },
+  {
     accessorKey: "createdAt",
     header: "Date",
   },
